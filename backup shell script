@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Define variables
+S3_BUCKET="manus33"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="jenkins_backup_$TIMESTAMP.tar.gz"
+AWS_ACCESS_KEY_ID="AKIARSYDSFR"
+AWS_SECRET_ACCESS_KEY="jXDS/hit+cqVcRdHh1IVUBF4IiM"
+
+# Export AWS credentials as environment variables
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+
+# Create a backup of the Jenkins directory and upload it to S3
+if tar -czvf - /var/lib/jenkins | aws s3 cp - "s3://$S3_BUCKET/$BACKUP_FILE"; then
+    echo "Backup successfully uploaded to s3://$S3_BUCKET/$BACKUP_FILE"
+else
+    echo "Failed to upload backup to S3" >&2
+    exit 1
+fi
