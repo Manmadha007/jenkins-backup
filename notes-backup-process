@@ -1,0 +1,142 @@
+Step 2: Create a Backup Script
+
+Create a shell script that archives the Jenkins home directory.
+
+1. Connect to the Jenkins server via SSH.
+
+
+2. Create a backup script:
+
+#!/bin/bash
+
+# Variables
+JENKINS_HOME="/var/lib/jenkins"
+BACKUP_DIR="/backup/jenkins"
+TIMESTAMP=$(date +%F-%H%M)
+BACKUP_FILE="$BACKUP_DIR/jenkins-backup-$TIMESTAMP.tar.gz"
+RETENTION_DAYS=7  # Keep backups for 7 days
+
+# Ensure backup directory exists
+mkdir -p "$BACKUP_DIR"
+
+# Create a compressed backup
+tar -czf "$BACKUP_FILE" "$JENKINS_HOME"
+
+# Remove backups older than retention period
+find "$BACKUP_DIR" -type f -name "jenkins-backup-*.tar.gz" -mtime +$RETENTION_DAYS -delete
+
+echo "Backup completed: $BACKUP_FILE"
+
+
+3. Save the script as /backup/jenkins_backup.sh.
+
+
+4. Make it executable:
+
+chmod +x /backup/jenkins_backup.sh
+
+
+
+
+---
+
+Step 3: Schedule Backup Using Jenkins Job
+
+1. Open Jenkins Dashboard → Go to Manage Jenkins → Manage Plugins → Install the "ThinBackup" or "Backup Plugin" (optional).
+
+
+2. Create a New Job:
+
+Go to New Item → Select Freestyle Project → Name it "Jenkins Backup" → Click OK.
+
+
+
+3. Configure the Job:
+
+Under Build Steps, select Execute Shell and enter:
+
+/backup/jenkins_backup.sh
+
+
+
+4. Schedule the Job:
+
+Under Build Triggers, select Build periodically and enter:
+
+H 2 * * *
+
+(Runs every night at 2 AM).
+
+
+
+5. Save and Apply Changes.
+
+
+
+
+---
+
+Step 4: Store Backups in Cloud (Optional)
+
+To upload backups to a cloud storage (AWS S3 or Google Drive):
+
+For AWS S3:
+
+1. Install AWS CLI:
+
+sudo apt install awscli -y
+
+
+2. Configure AWS credentials:
+
+aws configure
+
+
+3. Modify the backup script to upload to S3:
+
+aws s3 cp "$BACKUP_FILE" s3://your-bucket-name/
+
+
+
+For Google Drive:
+
+Use rclone:
+
+1. Install rclone and configure Google Drive.
+
+
+2. Modify the script to upload to Google Drive:
+
+rclone copy "$BACKUP_FILE" gdrive:/JenkinsBackups/
+
+
+
+
+---
+
+Step 5: Test & Verify
+
+1. Run the job manually to ensure the script works.
+
+
+2. Check the backup directory (/backup/jenkins/) for the created .tar.gz files.
+
+
+3. Try restoring by extracting the backup and replacing the existing JENKINS_HOME.
+
+
+
+
+---
+
+Step 6: Automate Cleanup & Monitoring (Optional)
+
+Cleanup old backups (already included in script).
+
+Set up monitoring using email notifications or logging to check if the backup fails.
+
+
+
+---
+
+Now, you have an automated Jenkins backup system!
